@@ -7,6 +7,7 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../config/firebaseConfig';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
 import { query, where, collection, getDocs } from "firebase/firestore";
+import { sendPasswordResetEmail } from 'firebase/auth';
 
 
 
@@ -26,6 +27,19 @@ const AdminLogin: React.FC<Props> = ({ navigation }) => {
     const [loaded, setLoaded] = useState(false);
 
     const db = getFirestore();
+
+    const handleResetPassword = async (email: string) => {
+        if (email) {
+            try {
+                await sendPasswordResetEmail(auth, email);
+                setSuccessMessage('Link de redefinição de senha enviado para o email.');
+            } catch (error) {
+                setErrorMessage('Falha ao enviar link de redefinição de senha. Verifique o email fornecido.');
+            }
+        } else {
+            setErrorMessage('Por favor, insira um email válido.');
+        }
+    };
 
     const onSubmit = async (values: FormValues) => {
         try {
@@ -102,6 +116,11 @@ const AdminLogin: React.FC<Props> = ({ navigation }) => {
             {successMessage && <Text style={{ color: 'green' }}>{successMessage}</Text>}
             {errorMessage && <Text style={{ color: 'red' }}>{errorMessage}</Text>}
             <Button title="Entrar" onPress={() => formik.handleSubmit()} />
+            <Text
+                style={styles.resetPasswordText}
+                onPress={() => handleResetPassword(formik.values.email)}>
+                Esqueci a senha
+            </Text>
         </View>
     );
 };
@@ -125,6 +144,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginBottom: 20,
         marginTop: -20,
+    },
+    resetPasswordText: {
+        marginTop: 20,
+        color: '#007bff',
+        textAlign: 'center',
+        textDecorationLine: 'underline',
     },
 });
 

@@ -5,6 +5,7 @@ import whyDidYouRender from '@welldone-software/why-did-you-render';
 import QueueControl from "./src/screens/QueueControl";
 import Home from "./src/screens/Home";
 import AdminLogin from "./src/screens/AdminLogin";
+import AccountActivation from "./src/screens/AccountActivation";
 
 if (process.env.NODE_ENV === 'development') {
     whyDidYouRender(React, {
@@ -21,6 +22,7 @@ const App: React.FC = () => {
                 <Stack.Screen name="Login" component={AdminLogin} />
                 <Stack.Screen name={'QueueControl'} component={QueueControl} />
                 <Stack.Screen name={'Home'} component={Home} />
+                <Stack.Screen name={'AccountActivation'} component={AccountActivation} />
             </Stack.Navigator>
         </NavigationContainer>
     );
