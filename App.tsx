@@ -1,11 +1,10 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import Login from './src/screens/Login';
 import React from 'react';
 import whyDidYouRender from '@welldone-software/why-did-you-render';
-import SignUp from "./src/screens/SignUp";
 import QueueControl from "./src/screens/QueueControl";
-import NotificationScreen from "./src/screens/NotificationScreen";
+import Home from "./src/screens/Home";
+import AdminLogin from "./src/screens/AdminLogin";
 
 if (process.env.NODE_ENV === 'development') {
     whyDidYouRender(React, {
@@ -19,10 +18,9 @@ const App: React.FC = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator initialRouteName="Login">
-                <Stack.Screen name="Login" component={Login} />
-                <Stack.Screen name={'SignUp'} component={SignUp} />
-                <Stack.Screen name={'Queue'} component={QueueControl} />
-                <Stack.Screen name={'Notification'} component={NotificationScreen} />
+                <Stack.Screen name="Login" component={AdminLogin} />
+                <Stack.Screen name={'QueueControl'} component={QueueControl} />
+                <Stack.Screen name={'Home'} component={Home} />
             </Stack.Navigator>
         </NavigationContainer>
     );
