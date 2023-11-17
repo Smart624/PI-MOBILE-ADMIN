@@ -1,58 +1,156 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
-import { db } from '../config/firebaseConfig';
-import { getDocs, collection, doc, onSnapshot } from "firebase/firestore";
-import { useNavigation } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    query,
+    where,
+    getDocs,
+    deleteDoc,
+    doc,
+    serverTimestamp,
+    orderBy
+} from "firebase/firestore";
+import { StackNavigationProp } from '@react-navigation/stack';
+import { Timestamp } from 'firebase/firestore';
 
-type Queue = {
-    category: string,
-    waitTime: number,
-    usersInQueue: number
+type QueueControlScreenParams = {
+Home: undefined;
+QueueControl: undefined;
+};
+
+type QueueControlProps = {
+    navigation: StackNavigationProp<QueueControlScreenParams>;
+};
+
+interface UserInQueue {
+    docId: string;
+    uid: string;
+    loginNickname: string;
+    category: string;
+    waitTime: string;
+    createdAt: Timestamp;
+    firestoreDocId?: string;
 }
+const QueueControl = ({ navigation }: QueueControlProps) => {
+    const [searchId, setSearchId] = useState('');
+    const [time, setTime] = useState('');
+    const [queue, setQueue] = useState<UserInQueue[]>([]);
+    const [selectedCategory, setSelectedCategory] = useState('PCs');
+    const db = getFirestore();
 
-const QueueControl: React.FC = () => {
-    const navigation: any = useNavigation(); // forçando a tipagem para 'any'
-    const [queues, setQueues] = useState<Queue[]>([]);
-    const [userPosition, setUserPosition] = useState<number | null>(null);
+    const fetchQueue = async () => {
+        const q = query(
+            collection(db, "queues"),
+            where("category", "==", selectedCategory),
+            orderBy("createdAt", "asc") // order by timestamp
+        );
+        const querySnapshot = await getDocs(q);
+        const newQueue: UserInQueue[] = [];
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const querySnapshot = await getDocs(collection(db, "queues"));
-            const queuesData: Queue[] = [];
-            querySnapshot.forEach((doc) => {
-                queuesData.push(doc.data() as Queue);
-            });
-            setQueues(queuesData);
-        };
-
-        const userDoc = doc(db, "users", "userID");
-        const unsubscribe = onSnapshot(userDoc, (doc) => {
-            const userData = doc.data();
-            if (userData && 'position' in userData) {
-                setUserPosition(userData.position);
-                if (userData.position === 1) {
-                    navigation.navigate("Notification");
-                }
-            }
+        querySnapshot.forEach((doc) => {
+            const docData = doc.data() as UserInQueue;
+            newQueue.push({ firestoreDocId: doc.id, ...docData });
         });
 
-        fetchData();
+        setQueue(newQueue);
+    };
 
-        return () => unsubscribe();
-    }, []);
+
+
+
+    useEffect(() => {
+        fetchQueue();
+    }, [selectedCategory]);
+
+    const addToQueue = async () => {
+        try {
+            // Buscar usuário pelo nickname
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("loginNickname", "==", searchId));
+            const userSnapshot = await getDocs(q);
+            if (!userSnapshot.empty) {
+                const userData = userSnapshot.docs[0].data() as UserInQueue;
+
+                // Adicionar usuário na fila
+                await addDoc(collection(db, "queues"), {
+                    uid: userData.uid,
+                    loginNickname: userData.loginNickname,
+                    category: selectedCategory,
+                    waitTime: time,
+                    createdAt: serverTimestamp()
+                });
+
+                // Atualizar a fila exibida
+                fetchQueue();
+            }
+        } catch (error) {
+            console.error("Erro ao adicionar à fila:", error);
+        }
+    };
+
+    const removeFromQueue = async (docId: string) => {
+        try {
+            await deleteDoc(doc(db, "queues", docId));
+            fetchQueue();
+        } catch (error) {
+            console.error("Erro ao remover da fila:", error);
+        }
+    };
+
+    const clearQueue = async () => {
+        const q = query(collection(db, "queues"), where("category", "==", selectedCategory));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(async (doc) => {
+            await deleteDoc(doc.ref);
+        });
+        fetchQueue();
+    };
+
 
     return (
         <View style={styles.container}>
-            <Text>Olá, {/* Nome de Usuário */}!</Text>
-            {userPosition !== null && <Text>Sua posição atual: {userPosition}</Text>}
-            {queues.map((queue, index) => (
-                <View key={index} style={styles.queueContainer}>
-                    <Text>Categoria: {queue.category}</Text>
-                    <Text>Tempo de Espera: {queue.waitTime} min</Text>
-                    <Text>Usuários na Fila: {queue.usersInQueue}</Text>
-                </View>
-            ))}
-            <Button title="Voltar" onPress={() => navigation.goBack()} />
+            <Button title="Voltar para Home" onPress={() => navigation.navigate('Home')} />
+
+            <TextInput
+                placeholder="ID/Nick do usuário"
+                value={searchId}
+                onChangeText={setSearchId}
+                style={styles.input}
+            />
+            <TextInput
+                placeholder="Tempo (hh:mm)"
+                value={time}
+                onChangeText={setTime}
+                style={styles.input}
+            />
+            <Button title="Adicionar à Fila" onPress={addToQueue} />
+
+            <ScrollView>
+                {queue.map((user, index) => (
+                    <View key={user.docId} style={styles.userItem}>
+                        <Text>{index + 1}. {user.loginNickname}</Text> {/* The index + 1 is the position */}
+                        <Button title="Remover" onPress={() => removeFromQueue(user.docId)} />
+                    </View>
+                ))}
+
+
+
+            </ScrollView>
+            <Button title="Limpar Fila" onPress={clearQueue} />
+
+            <View style={styles.tabs}>
+                {['PCs', 'Consoles', 'Simuladores', 'VRs'].map(category => (
+                    <TouchableOpacity
+                        key={category}
+                        onPress={() => setSelectedCategory(category)}
+                        style={selectedCategory === category ? styles.selectedTab : null}
+                    >
+                        <Text>{category}</Text>
+                    </TouchableOpacity>
+                ))}
+            </View>
         </View>
     );
 };
@@ -60,15 +158,30 @@ const QueueControl: React.FC = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    queueContainer: {
-        margin: 10,
         padding: 10,
+    },
+    input: {
         borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5
+        borderColor: 'gray',
+        padding: 10,
+        marginBottom: 10,
+    },
+    userItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: 'gray',
+    },
+    tabs: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 10,
+    },
+    selectedTab: {
+        borderBottomWidth: 2,
+        borderBottomColor: 'blue',
     }
 });
 
