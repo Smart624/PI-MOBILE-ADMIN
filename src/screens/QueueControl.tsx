@@ -44,18 +44,19 @@ const QueueControl = ({ navigation }: QueueControlProps) => {
         const q = query(
             collection(db, "queues"),
             where("category", "==", selectedCategory),
-            orderBy("createdAt", "asc") // order by timestamp
+            orderBy("createdAt", "asc") // Order by timestamp
         );
         const querySnapshot = await getDocs(q);
         const newQueue: UserInQueue[] = [];
 
         querySnapshot.forEach((doc) => {
             const docData = doc.data() as UserInQueue;
-            newQueue.push({ firestoreDocId: doc.id, ...docData });
+            newQueue.push({ ...docData, docId: doc.id });
         });
 
         setQueue(newQueue);
     };
+
 
 
 
@@ -70,24 +71,46 @@ const QueueControl = ({ navigation }: QueueControlProps) => {
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("loginNickname", "==", searchId));
             const userSnapshot = await getDocs(q);
-            if (!userSnapshot.empty) {
-                const userData = userSnapshot.docs[0].data() as UserInQueue;
 
-                // Adicionar usuário na fila
-                await addDoc(collection(db, "queues"), {
-                    uid: userData.uid,
-                    loginNickname: userData.loginNickname,
-                    category: selectedCategory,
-                    waitTime: time,
-                    createdAt: serverTimestamp()
-                });
-
-                // Atualizar a fila exibida
-                fetchQueue();
+            if (userSnapshot.empty) {
+                alert("Erro: Usuário não encontrado.");
+                return;
             }
+
+
+
+            const userData = userSnapshot.docs[0].data() as UserInQueue;
+
+            // Verifying and formatting the wait time
+            const formattedWaitTime = formatWaitTime(time);
+            if (!formattedWaitTime) {
+                alert("Tempo de espera inválido. Por favor, use o formato hh:mm.");
+                return;
+            }
+
+            // Adicionar usuário na fila
+            await addDoc(collection(db, "queues"), {
+                uid: userData.uid,
+                loginNickname: userData.loginNickname,
+                category: selectedCategory,
+                waitTime: formattedWaitTime,
+                createdAt: serverTimestamp()
+            });
+
+            // Atualizar a fila exibida
+            fetchQueue();
         } catch (error) {
             console.error("Erro ao adicionar à fila:", error);
         }
+    };
+
+    const formatWaitTime = (time: string): string | null => {
+        const timePattern = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+        if (!timePattern.test(time)) {
+            console.error("Invalid time format. Please use hh:mm format.");
+            return null;
+        }
+        return time;
     };
 
     const removeFromQueue = async (docId: string) => {
@@ -130,14 +153,13 @@ const QueueControl = ({ navigation }: QueueControlProps) => {
             <ScrollView>
                 {queue.map((user, index) => (
                     <View key={user.docId} style={styles.userItem}>
-                        <Text>{index + 1}. {user.loginNickname}</Text> {/* The index + 1 is the position */}
+                        <Text>{`${index + 1}. ${user.loginNickname} - Espera: ${user.waitTime}`}</Text>
                         <Button title="Remover" onPress={() => removeFromQueue(user.docId)} />
                     </View>
                 ))}
-
-
-
             </ScrollView>
+
+
             <Button title="Limpar Fila" onPress={clearQueue} />
 
             <View style={styles.tabs}>

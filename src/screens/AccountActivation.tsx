@@ -73,7 +73,7 @@ const AccountActivation = () => {
     const onActivate = async () => {
         if (userInfo && userInfo.docId) {
             const userRef = doc(db, 'users', userInfo.docId);
-            // se não tive ativado
+            // se não tiver ativado
             if (!userInfo.activated) {
                 await updateDoc(userRef, {
                     activated: true,
