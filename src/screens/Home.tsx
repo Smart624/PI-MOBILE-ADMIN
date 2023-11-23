@@ -44,19 +44,19 @@ const Home = () => {
 
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => navigation.navigate('AccountActivation')}>
+                onPress={() => navigation.navigate('Activation')}>
                 <Text style={styles.buttonText}>Ativar Usuários</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
                 style={styles.button}
-                onPress={() => navigation.navigate('QueueControl')}>
+                onPress={() => navigation.navigate('Fila')}>
                 <Text style={styles.buttonText}>Controle de Filas</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
                 style={styles.logoutButton}
-                onPress={() => navigation.navigate('AdminLogin')}>
+                onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.logoutButtonText}>Logout</Text>
             </TouchableOpacity>
         </View>

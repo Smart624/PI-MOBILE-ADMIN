@@ -20,9 +20,9 @@ const App: React.FC = () => {
         <NavigationContainer>
             <Stack.Navigator initialRouteName="Login">
                 <Stack.Screen name="Login" component={AdminLogin} />
-                <Stack.Screen name={'QueueControl'} component={QueueControl} />
+                <Stack.Screen name={'Fila'} component={QueueControl} />
                 <Stack.Screen name={'Home'} component={Home} />
-                <Stack.Screen name={'AccountActivation'} component={AccountActivation} />
+                <Stack.Screen name={'Activation'} component={AccountActivation} />
             </Stack.Navigator>
         </NavigationContainer>
     );

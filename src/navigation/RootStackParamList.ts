@@ -2,10 +2,10 @@
 
 
 type RootStackParamList = {
+    Login: undefined;
+    Fila: undefined;
     Home: undefined;
-    AccountActivation: undefined;
-    QueueControl: undefined;
-    AdminLogin: undefined;
+    Activation: undefined;
 };
 
 export default RootStackParamList;
