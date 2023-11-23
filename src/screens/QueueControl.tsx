@@ -107,7 +107,7 @@ const QueueControl = ({ navigation }: QueueControlProps) => {
     const formatWaitTime = (time: string): string | null => {
         const timePattern = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
         if (!timePattern.test(time)) {
-            console.error("Invalid time format. Please use hh:mm format.");
+            alert("Tempo de espera inválido. Por favor, use o formato hh:mm.");
             return null;
         }
         return time;
