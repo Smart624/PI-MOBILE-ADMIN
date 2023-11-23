@@ -91,9 +91,9 @@ const AdminLogin: React.FC<Props> = ({ navigation }) => {
         setTimeout(() => setLoaded(true), 100);
     }, []);
 
-    // Conditional rendering based on the loaded state
+
     if (!loaded) {
-        return null; // Or return a loading spinner/placeholder
+        return null;
     }
 
     return (
