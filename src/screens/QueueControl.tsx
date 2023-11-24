@@ -40,6 +40,8 @@ const QueueControl = ({ navigation }: QueueControlProps) => {
     const [selectedCategory, setSelectedCategory] = useState('PCs');
     const db = getFirestore();
 
+
+
     const fetchQueue = async () => {
         const q = query(
             collection(db, "queues"),
@@ -67,7 +69,6 @@ const QueueControl = ({ navigation }: QueueControlProps) => {
 
     const addToQueue = async () => {
         try {
-            // Buscar usuário pelo nickname
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("loginNickname", "==", searchId));
             const userSnapshot = await getDocs(q);
